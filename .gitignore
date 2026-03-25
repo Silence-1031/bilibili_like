@@ -1,0 +1,6 @@
+# Project exclude paths
+/imooc-bilibili/imooc-bilibili-controller/target/
+/imooc-bilibili/imooc-bilibili-dao/target/
+/imooc-bilibili/imooc-bilibili-service/target/
+/imooc-bilibili-eureka/target/
+/imooc-bilibili-ms/target/
