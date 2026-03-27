@@ -11,7 +11,8 @@ public class ContentService {
     @Autowired
     private ContentDao contentDao;
     public Long addContent(Content content) {
-        contentDao.addContent(content);
-        return content.getId();
+        Long id = contentDao.addContent(content);
+        content.setId(id); // 将返回的ID设置到content对象
+        return id;
     }
 }

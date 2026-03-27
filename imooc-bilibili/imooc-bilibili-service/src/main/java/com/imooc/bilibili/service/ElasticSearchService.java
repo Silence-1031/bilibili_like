@@ -55,7 +55,7 @@ public class ElasticSearchService {
         SearchRequest searchRequest = new SearchRequest(indices);
         SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
         //分页
-        sourceBuilder.from(pageNo - 1);
+        sourceBuilder.from((pageNo - 1) * pageSize);
         sourceBuilder.size(pageSize);
         // 【步骤 3】多字段匹配查询
         MultiMatchQueryBuilder matchQueryBuilder = QueryBuilders.multiMatchQuery(keyword, "title", "nick", "description");

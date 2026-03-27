@@ -1,8 +1,11 @@
 package com.imooc.bilibili.service.config;
 
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import javax.servlet.*;
+import javax.servlet.annotation.WebFilter;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -29,32 +32,17 @@ import java.util.Set;
  *  Filter是用来过滤任务的，既可以被使用在请求资源，也可以是资源响应，或者二者都有
  *  Filter使用doFilter方法进行过滤
  */
-
 @Configuration
-public class CorsConfig implements Filter {
+public class CorsConfig implements WebMvcConfigurer {
 
-    private final String[] allowedDomain = {"http://localhost:8080", "http://39.107.54.180", "http://localhost:8081"};
-
-
-    public void doFilter(ServletRequest request, ServletResponse response,
-                         FilterChain chain) throws IOException, ServletException {
-        HttpServletResponse httpResponse = (HttpServletResponse) response;
-        HttpServletRequest httpRequest = (HttpServletRequest) request;
-        Set<String> allowedOrigins= new HashSet<>(Arrays.asList(allowedDomain));
-        String origin=httpRequest.getHeader("Origin");
-        if (origin == null) {
-            chain.doFilter(request, response);
-            return;
-        }
-        if (allowedOrigins.contains(origin)){
-            httpResponse.setHeader("Access-Control-Allow-Origin", origin);
-            httpResponse.setContentType("application/json;charset=UTF-8");
-            httpResponse.setHeader("Access-Control-Allow-Methods", "POST, GET, OPTIONS, DELETE, PUT");
-            httpResponse.setHeader("Access-Control-Max-Age", "3600");
-            httpResponse.setHeader("Access-Control-Allow-Headers", "Origin, No-Cache, X-Requested-With, If-Modified-Since, Pragma, Last-Modified, Cache-Control, Expires, Content-Type, X-E4M-With, userId, token, ut");//表明服务器支持的所有头信息字段
-            httpResponse.setHeader("Access-Control-Allow-Credentials", "true"); //如果要把Cookie发到服务器，需要指定Access-Control-Allow-Credentials字段为true;
-            httpResponse.setHeader("XDomainRequestAllowed","1");
-        }
-        chain.doFilter(request, response);
+    @Override
+    public void addCorsMappings(CorsRegistry registry) {
+        registry.addMapping("/**")
+                .allowedOriginPatterns("*") // 这里必须用这个！
+                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                .allowedHeaders("*")
+                .exposedHeaders("*", "Accept-Ranges", "Content-Range", "Content-Type", "Content-Disposition")
+                .allowCredentials(false) // 视频播放必须关闭！
+                .maxAge(3600);
     }
 }

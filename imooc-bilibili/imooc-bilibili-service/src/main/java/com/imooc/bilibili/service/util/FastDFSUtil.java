@@ -3,6 +3,7 @@ package com.imooc.bilibili.service.util;
 import com.github.tobato.fastdfs.domain.fdfs.FileInfo;
 import com.github.tobato.fastdfs.domain.fdfs.MetaData;
 import com.github.tobato.fastdfs.domain.fdfs.StorePath;
+import com.github.tobato.fastdfs.domain.proto.storage.DownloadByteArray;
 import com.github.tobato.fastdfs.domain.proto.storage.DownloadCallback;
 import com.github.tobato.fastdfs.service.AppendFileStorageClient;
 import com.github.tobato.fastdfs.service.FastFileStorageClient;
@@ -163,38 +164,53 @@ public class FastDFSUtil {
 
     public void viewVideoOnlineBySlices(HttpServletRequest request,
                                         HttpServletResponse response,
-                                        String path) throws Exception{
-        FileInfo fileInfo = fastFileStorageClient.queryFileInfo(DEFAULT_GROUP, path);
+                                        String path) throws Exception {
+
+        // 1. 获取文件大小
+        FileInfo fileInfo = fastFileStorageClient.queryFileInfo("group1", path);
         long totalFileSize = fileInfo.getFileSize();
-        String url = httpFdfsStorageAddr + path;
-        Enumeration<String> headerNames = request.getHeaderNames(); //获取所有请求头
-        Map<String, Object> headers = new HashMap<>();
-        while(headerNames.hasMoreElements()){
-            String header = headerNames.nextElement();
-            headers.put(header, request.getHeader(header));
+
+        // 2. 解析 Range 请求头
+        String range = request.getHeader("Range");
+        long start = 0;
+        long end = totalFileSize - 1;
+
+        if (range != null && range.startsWith("bytes=")) {
+            String[] split = range.substring(6).split("-");
+            start = Long.parseLong(split[0]);
+            if (split.length > 1 && split[1] != null && !split[1].isEmpty()) {
+                end = Long.parseLong(split[1]);
+            }
         }
-        String rangeStr = request.getHeader("Range"); //获取Range请求头
-        String[] range;
-        if(StringUtil.isNullOrEmpty(rangeStr)){
-            rangeStr = "bytes=0-" + (totalFileSize-1);
-        }
-        range = rangeStr.split("bytes=|-");
-        long begin = 0;
-        if(range.length >= 2){ // 获取Range请求头中的开始位置和结束位置
-            begin = Long.parseLong(range[1]);
-        }
-        long end = totalFileSize-1;
-        if(range.length >= 3){
-            end = Long.parseLong(range[2]);
-        }
-        long len = (end - begin) + 1;
-        String contentRange = "bytes " + begin + "-" + end + "/" + totalFileSize;
-        response.setHeader("Content-Range", contentRange);
-        response.setHeader("Accept-Ranges", "bytes");
-        response.setHeader("Content-Type", "video/mp4");
-        response.setContentLength((int)len);
+
+        long length = end - start + 1;
+
+        // 3. 设置响应头
         response.setStatus(HttpServletResponse.SC_PARTIAL_CONTENT);
-        HttpUtil.get(url, headers, response);
+        response.setContentType("video/mp4");
+        response.setHeader("Accept-Ranges", "bytes");
+        response.setHeader("Content-Range", "bytes " + start + "-" + end + "/" + totalFileSize);
+        response.setHeader("Content-Length", String.valueOf(length));
+
+        // 4. 下载完整文件到 byte[]
+        byte[] videoBytes = fastFileStorageClient.downloadFile("group1", path, new DownloadByteArray());
+
+        // 5. 输出分片流
+        try (ByteArrayInputStream bais = new ByteArrayInputStream(videoBytes);
+             OutputStream os = response.getOutputStream()) {
+
+            bais.skip(start);
+            byte[] buffer = new byte[8192];
+            long remain = length;
+
+            while (remain > 0) {
+                int read = bais.read(buffer, 0, (int) Math.min(buffer.length, remain));
+                if (read == -1) break;
+                os.write(buffer, 0, read);
+                remain -= read;
+            }
+            os.flush();
+        }
     }
 
     public void downLoadFile(String url, String localPath) {

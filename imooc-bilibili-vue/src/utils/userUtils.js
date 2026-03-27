@@ -2,7 +2,7 @@ import userApi from "@/api/userApi";
 import JSEncrypt from 'jsencrypt';
 
 //判断是否使用刷新令牌
-export const usingRefreshToken = false;
+export const usingRefreshToken = true;
 export default {
     data() {
         return {

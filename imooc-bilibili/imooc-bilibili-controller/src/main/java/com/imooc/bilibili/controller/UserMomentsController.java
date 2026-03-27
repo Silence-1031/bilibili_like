@@ -22,7 +22,7 @@ public class UserMomentsController {
     private UserSupport userSupport;
 
 
-    @ApiLimitedRole(limitedRoleCodeList = {AuthRoleConstant.ROLE_LV0})
+    @ApiLimitedRole(limitedRoleCodeList = {AuthRoleConstant.ROLE_LV1})
 //    @DataLimited
     @PostMapping("/user-moments")
     public JsonResponse<String> addUserMoments(@RequestBody UserMoment userMoment) throws Exception {

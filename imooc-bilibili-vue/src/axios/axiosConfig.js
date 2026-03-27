@@ -8,16 +8,26 @@ const httpRequest = axios.create({
 });
 
 
-//请求拦截器
-httpRequest.interceptors.request.use(function (config){
-
-    const token = localStorage.getItem('token');
-    if(token && token !== ''){
-        config.headers['token'] = token;
+// 请求拦截器
+httpRequest.interceptors.request.use(
+    config => {
+        const token = localStorage.getItem('token');
+        const refreshToken = localStorage.getItem('refreshToken');
+        
+        if (token && token !== 'null' && token !== '') {
+            config.headers['token'] = token;
+        }
+        
+        if (refreshToken && refreshToken !== 'null' && refreshToken !== '') {
+            config.headers['refreshToken'] = refreshToken;
+        }
+        
+        return config;
+    },
+    error => {
+        return Promise.reject(error);
     }
-    return config;
-
-});
+);
 
 //响应拦截器
 httpRequest.interceptors.response.use(function (response){

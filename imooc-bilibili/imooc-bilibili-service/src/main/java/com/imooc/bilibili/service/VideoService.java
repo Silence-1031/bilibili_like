@@ -92,7 +92,6 @@ public class VideoService {
             item.setVideoId(videoId);
         });
         videoDao.batchAddVideoTags(tagList);
-        videoDao.batchAddVideoTags(tagList);
         //新增：自动发布动态
         try{
             //添加动态内容
